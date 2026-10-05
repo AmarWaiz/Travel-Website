@@ -1,0 +1,10 @@
+import { chromium } from "playwright-core";
+const exe = process.env.HOME + "/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome";
+const browser = await chromium.launch({ executablePath: exe });
+const context = await browser.newContext({ ignoreHTTPSErrors: true, proxy: (() => { const u = new URL(process.env.HTTPS_PROXY); return { server: `${u.protocol}//${u.host}`, username: decodeURIComponent(u.username), password: decodeURIComponent(u.password), bypass: "localhost,127.0.0.1" }; })() });
+const page = await context.newPage();
+page.on("response", (r) => { if (r.status() >= 400 || r.status() === 0) console.log(r.status(), r.url().slice(0, 90)); });
+page.on("requestfailed", (r) => console.log("FAILED", r.failure()?.errorText, r.url().slice(0, 90)));
+await page.goto("http://localhost:3001/", { waitUntil: "networkidle" });
+await page.waitForTimeout(2000);
+await browser.close();
